@@ -1,0 +1,7 @@
+Some dependencies to be implemented in advance.
+
+Yosys (Program to extract circuit feature)
+https://github.com/YosysHQ/yosys
+
+Stable baselines (RL baseline algo. library)
+https://stable-baselines.readthedocs.io/en/master/
