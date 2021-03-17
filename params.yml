@@ -10,11 +10,13 @@
 # environment to train the RL agent. 
 
 # change this to the abc binary path if the command is not recognized system-wide
-abc_binary: yosys-abc
-yosys_binary: yosys
+# So after installing the yosys, abc package will also be installed and named as yosys-abc
+#Find it and change the path below
+abc_binary: yosys-abc # Change to path/to/ur/yosys-abc binary file on ur machine
+yosys_binary: yosys # Change to path/to/ur/yosys-abc binary file on ur machine
 
 # path of the design file in one of the accepted formats by ABC
-design_file: Circuits/adder.v
+design_file: Circuits/max.v
 
 # add more optimization to the toolbox
 optimizations:
