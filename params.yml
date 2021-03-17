@@ -13,7 +13,7 @@
 # So after installing the yosys, abc package will also be installed and named as yosys-abc
 #Find it and change the path below
 abc_binary: yosys-abc # Change to path/to/ur/yosys-abc binary file on ur machine
-yosys_binary: yosys # Change to path/to/ur/yosys binary file on ur machine
+yosys_binary: yosys # Change to path/to/ur/yosys-abc binary file on ur machine
 
 # path of the design file in one of the accepted formats by ABC
 design_file: Circuits/max.v
@@ -27,6 +27,12 @@ optimizations:
   - resub
   - resub -z
   - balance
+
+
+# FPGA mapping - exlusive with the above
+fpga_mapping:
+  levels: 100
+  lut_inputs: 6
 
 # the directory to hold the playground an agent uses to practice
 playground_dir: playground
