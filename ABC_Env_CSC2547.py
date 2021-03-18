@@ -5,7 +5,7 @@
 # LICENSE file in the root directory of this source tree. 
 
 #The reward function has been adjusted to exponential as suggested by Yufei Kang
-# Reward = (Base^(1- current_lut / Initial_lut) - Omega)
+# Reward = (Base^[(Initial_lut - current_lut)/10] - Omega)
 # Omega = 1 for now
 
 import numpy as np
@@ -60,7 +60,7 @@ class ABCEnv(gym.Env):
 
         #Due to the adjusted reward function, we also need to store the initial value of lut_count and level
         self.initial_lut_6, self.initial_levels = self._run()
-        self.base = 2048
+        self.base = 2
 
         #Run one abc iteration to get the initial lut_6 and levels
         abc_command = 'read ' + self.params['design_file'] + ';'
@@ -164,11 +164,11 @@ class ABCEnv(gym.Env):
         """
         Mark reward as only the area difference
         The reward function has been adjusted to exponential as suggested by Yufei Kang
-        Reward = (Base^(1- current_lut / Initial_lut) - Omega)
-        Omega = 0 for now
+        Reward = (Base^[(Initial_lut - current_lut)/10] - Omega)
+        Omega = 1 for now
         """
         # Calculate the area difference
-        reward = 1 - (lut_6 / self.initial_lut_6)
+        reward = (self.initial_lut_6 - lut_6) / 10
         #Make it exponential
         reward = np.power(self.base, reward) - 1 
         # now calculate the reward
