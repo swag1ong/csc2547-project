@@ -4,6 +4,10 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree. 
 
+#The reward function has been adjusted to exponential as suggested by Yufei Kang
+# Reward = (Base^(1- current_lut / Initial_lut) - Omega)
+# Omega = 1 for now
+
 import numpy as np
 import gym
 from gym import spaces
@@ -54,6 +58,23 @@ class ABCEnv(gym.Env):
 
         self.log = None
 
+        #Due to the adjusted reward function, we also need to store the initial value of lut_count and level
+        self.initial_lut_6, self.initial_levels = self._run()
+        self.base = 2048
+
+        #Run one abc iteration to get the initial lut_6 and levels
+        abc_command = 'read ' + self.params['design_file'] + ';'
+        abc_command += ';'.join(self.sequence) + '; '
+        abc_command += 'if -K ' + str(self.params['fpga_mapping']['lut_inputs']) + '; '
+        abc_command += 'print_stats;'
+    
+        try:
+            proc = check_output([self.params['abc_binary'], '-c', abc_command])
+            # get reward
+            self.initial_lut_6, self.initial_levels = self._get_metrics(proc)
+        except Exception as e:
+            print(e)
+
 
         # Define action and observation space
         # They must be gym.spaces objects
@@ -80,7 +101,6 @@ class ABCEnv(gym.Env):
 
         # logging
         csv_name = 'log'+ str(self.episode) + '.csv' 
-        #result_file = os.path.join('result',self.params['design_file'])
         log_file = os.path.join('log', csv_name)
         if not os.path.exists('log'):
             os.makedirs('log')
@@ -114,7 +134,7 @@ class ABCEnv(gym.Env):
             proc = check_output([self.params['abc_binary'], '-c', abc_command])
             # get reward
             lut_6, levels = self._get_metrics(proc)
-            reward = self._get_reward(lut_6, levels)
+            reward = self._get_reward(lut_6, levels) 
             self.lut_6, self.levels = lut_6, levels
             # get new state of the circuit
             state = self._get_state(output_design_file)
@@ -143,10 +163,14 @@ class ABCEnv(gym.Env):
     def _get_reward(self, lut_6, levels):
         """
         Mark reward as only the area difference
+        The reward function has been adjusted to exponential as suggested by Yufei Kang
+        Reward = (Base^(1- current_lut / Initial_lut) - Omega)
+        Omega = 0 for now
         """
-        
-        reward = lut_6 - self.lut_6 # Targeting the area improvements
-        
+        # Calculate the area difference
+        reward = 1 - (lut_6 / self.initial_lut_6)
+        #Make it exponential
+        reward = np.power(self.base, reward) - 1 
         # now calculate the reward
         return reward
    
