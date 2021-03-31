@@ -8,6 +8,11 @@
 # Reward = (Base^[(Initial_lut - current_lut)/10] - Omega)
 # Omega = 1 for now
 
+#Updated on date 31/3/2021
+#Previously the base is 2 ^[(Initial_lut - current_lut)/10] - 1)
+#Now it is changed to 10^[(Initial_lut - current_lut - 50)/5]
+# using a reward shift to make it focus on the attention region
+
 import numpy as np
 import gym
 from gym import spaces
@@ -50,6 +55,7 @@ class ABCEnv(gym.Env):
         self.episode = 0
         self.sequence = ['strash']
         self.lut_6, self.levels = float('inf'), float('inf')
+        self.Ep_best_lut_6 = (float('inf'), float('inf'))
 
         self.best_known_lut_6 = (float('inf'), float('inf'), -1, -1)
         self.best_known_sequence_lut_6 = ['strash']
@@ -60,7 +66,7 @@ class ABCEnv(gym.Env):
 
         #Due to the adjusted reward function, we also need to store the initial value of lut_count and level
         self.initial_lut_6, self.initial_levels = self._run()
-        self.base = 2
+        self.base = 10
 
         #Run one abc iteration to get the initial lut_6 and levels
         abc_command = 'read ' + self.params['design_file'] + ';'
@@ -167,10 +173,16 @@ class ABCEnv(gym.Env):
         Reward = (Base^[(Initial_lut - current_lut)/10] - Omega)
         Omega = 1 for now
         """
+        if (self.initial_lut_6 - lut_6) <= 0:
+            return 0
         # Calculate the area difference
-        reward = (self.initial_lut_6 - lut_6) / 10
+        reward = (self.initial_lut_6 - lut_6 - 50)/5
         #Make it exponential
-        reward = np.power(self.base, reward) - 1 
+        if reward > 0: 
+            reward = np.power(self.base, reward)
+        else: 
+            reward = 1 / ( np.power(self.base, - reward) ) 
+
         # now calculate the reward
         return reward
    
@@ -182,6 +194,8 @@ class ABCEnv(gym.Env):
         new_state, reward = self._run()
         
         # logging
+        if self.lut_6 <= self.Ep_best_lut_6[0]:
+            self.Ep_best_lut_6 = (int(self.lut_6), int(self.levels))
         if self.lut_6 <= self.best_known_lut_6[0]:
             self.best_known_lut_6 = (int(self.lut_6), int(self.levels), self.episode, self.iteration)
             self.best_known_sequence_lut_6 = self.sequence
@@ -211,5 +225,5 @@ class ABCEnv(gym.Env):
         pass
 
     def update(self):
-        print("Episode ", self.episode,": ","Best Area is",self.best_known_lut_6)
+        print("Episode ", self.episode,"Current Episode Best Area is: ",self.Ep_best_lut_6,"Best knwon Area is",self.best_known_lut_6)
         print("The corresponding opt command sequence is ",self.best_known_sequence_lut_6)
